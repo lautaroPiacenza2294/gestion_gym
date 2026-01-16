@@ -1,4 +1,6 @@
 from django.db import models
+from datetime import timedelta
+from clientes.models import Cliente
 
 
 class Ejercicio(models.Model):
@@ -133,3 +135,55 @@ class EjercicioDia(models.Model):
     
     def __str__(self):
         return f"{self.ejercicio.nombre} - {self.series}x{self.repeticiones}"
+
+
+class Plan(models.Model):
+    """Planes disponibles según frecuencia semanal"""
+    nombre = models.CharField(max_length=100, help_text="Ej: Plan 2x Semana, Plan Premium")
+    frecuencia_semanal = models.IntegerField(help_text="Veces que puede asistir por semana (2, 3, 5)")
+    precio = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio mensual actual")
+    descripcion = models.TextField(blank=True, help_text="Descripción del plan")
+    activo = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['frecuencia_semanal']
+        verbose_name = 'Plan'
+        verbose_name_plural = 'Planes'
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.frecuencia_semanal}x semana - ${self.precio}"
+
+
+class Membresia(models.Model):
+    """Membresía activa de un cliente"""
+    ESTADO_CHOICES = [
+        ('activa', 'Activa'),
+        ('suspendida', 'Suspendida'),
+        ('cancelada', 'Cancelada'),
+        ('vencida', 'Vencida'),
+    ]
+    
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='membresias')
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name='membresias')
+    
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    
+    precio_contratado = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        help_text="Precio al momento de contratar (puede diferir del precio actual del plan)"
+    )
+    
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activa')
+    observaciones = models.TextField(blank=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-fecha_inicio']
+        verbose_name = 'Membresía'
+        verbose_name_plural = 'Membresías'
+    
+    def __str__(self):
+        return f"{self.cliente} - {self.plan.nombre} ({self.estado})"
