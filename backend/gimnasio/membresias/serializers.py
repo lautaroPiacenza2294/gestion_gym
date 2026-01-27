@@ -106,6 +106,62 @@ class MembresiaListSerializer(serializers.ModelSerializer):
         if obj.fecha_fin < hoy:
             return 0
         return (obj.fecha_fin - hoy).days
+    
+class MembresiaCreateSerializer(serializers.ModelSerializer):
+    """Para crear o editar membresías"""
+    class Meta:
+        model = Membresia
+        fields = [
+            'cliente',
+            'plan',
+            'fecha_inicio',
+            'fecha_fin',
+            'estado',
+            'observaciones'
+        ]
+        
+    
+    def create(self, validated_data):
+        """Sobrescribir create para asignar el precio automáticamente"""
+        plan = validated_data.get('plan')
+        validated_data['precio_contratado'] = plan.precio
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Si cambia el plan, actualizar el precio"""
+        plan = validated_data.get('plan', instance.plan)
+        if plan != instance.plan:
+            validated_data['precio_contratado'] = plan.precio
+        return super().update(instance, validated_data)
+    
+    def validate(self, data):
+        """Validaciones generales"""
+        fecha_inicio = data.get('fecha_inicio')
+        fecha_fin = data.get('fecha_fin')
+        
+        if fecha_fin and fecha_inicio:
+            if fecha_fin <= fecha_inicio:
+                raise serializers.ValidationError(
+                    "La fecha de fin debe ser posterior a la fecha de inicio"
+                )
+        
+        return data
+    
+    def validate_cliente(self, value):
+        """Validar que el cliente esté activo"""
+        if not value.activo:
+            raise serializers.ValidationError(
+                "No se puede crear una membresía para un cliente inactivo"
+            )
+        return value
+    
+    def validate_plan(self, value):
+        """Validar que el plan esté activo"""
+        if not value.activo:
+            raise serializers.ValidationError(
+                "No se puede crear una membresía con un plan inactivo"
+            )
+        return value
 
 # ============================================
 # SERIALIZERS PARA EJERCICIODÍA

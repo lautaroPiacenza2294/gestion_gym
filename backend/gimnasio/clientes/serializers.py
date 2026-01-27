@@ -118,7 +118,6 @@ class RecordatorioListSerializer(serializers.ModelSerializer):
     """Serializer para listar recordatorios"""
     cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
     cliente_apellido = serializers.CharField(source='cliente.apellido', read_only=True)
-    cliente_dni = serializers.CharField(source='cliente.dni', read_only=True)
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
     canal_display = serializers.CharField(source='get_canal_display', read_only=True)
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
@@ -130,7 +129,6 @@ class RecordatorioListSerializer(serializers.ModelSerializer):
             'cliente',
             'cliente_nombre',
             'cliente_apellido',
-            'cliente_dni',
             'tipo',
             'tipo_display',
             'canal',
