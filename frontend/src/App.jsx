@@ -4,7 +4,6 @@ import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
 import FinanzasDashboard from './pages/finanzas/FinanzasDashboard';
 import PagosPage from './pages/finanzas/PagosPage';
-import './App.css';
 
 function App() {
   return (
