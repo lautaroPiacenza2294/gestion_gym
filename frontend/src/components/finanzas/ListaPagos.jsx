@@ -97,7 +97,7 @@ const ListaPagos = ({ pagos = [], loading = false }) => {
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
                 <td className="py-3 px-4 text-sm text-gray-900">
-                  {pago.cliente_nombre || 'Sin nombre'}
+                  {pago.cliente_nombre_completo || 'Sin nombre'}
                 </td>
                 <td className="py-3 px-4 text-sm font-semibold text-green-600 text-right">
                   {formatearMoneda(pago.monto)}
