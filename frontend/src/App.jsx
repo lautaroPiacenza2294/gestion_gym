@@ -5,7 +5,6 @@ import Clientes from './pages/Clientes';
 import FinanzasDashboard from './pages/finanzas/FinanzasDashboard';
 import PagosPage from './pages/finanzas/PagosPage';
 
-
 function App() {
   return (
     <div className="App">
