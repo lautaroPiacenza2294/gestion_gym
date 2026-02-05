@@ -2,74 +2,90 @@ import { useState } from 'react';
 import Layout from '../components/layout/Layout';
 import ListaClientes from '../components/clientes/ListaClientes';
 import BotonCrearCliente from '../components/clientes/BotonCrearCliente';
-import '../components/clientes/clientes.css';
+import ModalCliente from '../components/clientes/ModalCliente';
+import { clientesAPI } from '../services';
 
 const Clientes = () => {
   const [refresh, setRefresh] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [clienteToEdit, setClienteToEdit] = useState(null);
 
-  // Función para refrescar la lista
   const refrescarLista = () => {
     setRefresh(prev => prev + 1);
   };
 
-  // Handler para crear cliente
   const handleCrearCliente = () => {
-    // TODO: Abrir modal o navegar a formulario de creación
-    console.log('Crear nuevo cliente');
-    alert('Funcionalidad de crear cliente - Próximamente implementaremos el formulario');
+    setClienteToEdit(null);
+    setModalOpen(true);
   };
 
-  // Handler para ver detalles de membresía
+  const handleSuccess = () => {
+    refrescarLista();
+    setModalOpen(false);
+  };
+
   const handleVerDetalle = (cliente) => {
-    // TODO: Abrir modal o navegar a detalles de membresía
     console.log('Ver detalles de membresía:', cliente);
     alert(`Ver detalles de membresía de ${cliente.nombre} ${cliente.apellido}`);
   };
 
-  // Handler para editar cliente
   const handleEditar = (cliente) => {
-    // TODO: Abrir modal o navegar a formulario de edición
-    console.log('Editar cliente:', cliente);
-    alert(`Editar cliente: ${cliente.nombre} ${cliente.apellido}`);
+    setClienteToEdit(cliente);
+    setModalOpen(true);
   };
 
-  // Handler para eliminar cliente
   const handleEliminar = async (cliente) => {
-    // Confirmar eliminación
     const confirmar = window.confirm(
-      `¿Estás seguro de que deseas eliminar a ${cliente.nombre} ${cliente.apellido}?`
+      `¿Estás seguro de que deseas ${cliente.activo ? 'desactivar' : 'activar'} a ${cliente.nombre} ${cliente.apellido}?`
     );
-    
+
     if (confirmar) {
       try {
-        // TODO: Implementar eliminación con clientesAPI.delete(cliente.id)
-        console.log('Eliminar cliente:', cliente);
-        alert(`Cliente ${cliente.nombre} ${cliente.apellido} eliminado (simulado)`);
-        
-        // Refrescar lista después de eliminar
+        await clientesAPI.partialUpdate(cliente.id, {
+          activo: !cliente.activo
+        });
+
+        alert(
+          `Cliente ${cliente.nombre} ${cliente.apellido} ${cliente.activo ? 'desactivado' : 'activado'} exitosamente`
+        );
+
         refrescarLista();
       } catch (error) {
-        console.error('Error eliminando cliente:', error);
-        alert('Error al eliminar el cliente. Por favor, intenta de nuevo.');
+        console.error('Error cambiando estado del cliente:', error);
+        alert('Error al cambiar el estado del cliente. Por favor, intenta de nuevo.');
       }
     }
   };
 
   return (
     <Layout>
-      <div className="clientes-container">
-        {/* Header con título y botón de crear */}
-        <div className="clientes-header">
-          <h1>Gestión de Clientes</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Gestión de Clientes
+          </h1>
+
           <BotonCrearCliente onClick={handleCrearCliente} />
         </div>
 
-        {/* Lista de clientes */}
-        <ListaClientes 
-          onVerDetalle={handleVerDetalle}
-          onEditar={handleEditar}
-          onEliminar={handleEliminar}
-          refresh={refresh}
+        {/* Lista */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <ListaClientes 
+            onVerDetalle={handleVerDetalle}
+            onEditar={handleEditar}
+            onEliminar={handleEliminar}
+            refresh={refresh}
+          />
+        </div>
+
+        {/* Modal */}
+        <ModalCliente
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSuccess={handleSuccess}
+          clienteToEdit={clienteToEdit}
         />
       </div>
     </Layout>

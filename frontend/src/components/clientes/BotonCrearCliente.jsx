@@ -1,11 +1,10 @@
 import { UserPlus } from 'lucide-react';
-import './clientes.css';
 
 const BotonCrearCliente = ({ onClick }) => {
   return (
-    <button 
-      className="btn-crear-cliente"
+    <button
       onClick={onClick}
+      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow transition"
     >
       <UserPlus size={20} />
       <span>Nuevo Cliente</span>
