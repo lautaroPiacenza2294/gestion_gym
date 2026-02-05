@@ -115,8 +115,8 @@ const FinanzasDashboard = () => {
                 flex items-center gap-2
               "
             >
-              <span className="text-lg">➕</span>
-              Registrar Pago
+              <span className="text-lg"></span>
+              Ver Pagos
             </button>
           </div>
 

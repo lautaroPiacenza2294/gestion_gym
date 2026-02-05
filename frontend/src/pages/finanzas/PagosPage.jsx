@@ -180,7 +180,7 @@ const PagosPage = () => {
                         #{pago.id}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-900 font-medium">
-                        {pago.cliente_nombre || 'Sin nombre'}
+                        {pago.cliente_nombre_completo || 'Sin nombre'}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {traducirConcepto(pago.concepto)}
