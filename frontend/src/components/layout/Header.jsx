@@ -1,26 +1,24 @@
-import { Bell, Search } from 'lucide-react';
-
-const Header = ({ title = 'Dashboard' }) => {
+const Header = ({ title }) => {
   return (
-    <header className="header">
+    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      
       {/* Título de la página */}
-      <h1 className="header-title">{title}</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        {title}
+      </h1>
 
-      {/* Acciones del header */}
-      <div className="header-actions">
-        {/* Botón de notificaciones */}
-        <button className="header-btn">
-          <Bell size={20} />
-        </button>
-
-        {/* Botón de búsqueda */}
-        <button className="header-btn">
-          <Search size={20} />
+      {/* Área de usuario (opcional, puedes personalizarlo) */}
+      <div className="flex items-center gap-4">
+        {/* Notificaciones */}
+        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <span className="text-xl">🔔</span>
         </button>
 
         {/* Avatar del usuario */}
-        <div className="user-avatar">
-          <span>LP</span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+            LP
+          </div>
         </div>
       </div>
     </header>
