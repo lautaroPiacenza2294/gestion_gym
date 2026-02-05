@@ -4,7 +4,7 @@ import KPICard from '../components/dashboard/KPICard';
 import ChartCard from '../components/dashboard/ChartCard';
 import AlertasPanel from '../components/dashboard/AlertasPanel';
 import ActividadReciente from '../components/dashboard/ActividadReciente';
-import '../components/dashboard/dashboard.css'
+
 
 const Dashboard = () => {
   // ============================================

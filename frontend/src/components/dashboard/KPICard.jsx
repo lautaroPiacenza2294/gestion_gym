@@ -1,3 +1,4 @@
+import React from 'react';
 const KPICard = ({ 
   title,           // Título de la métrica (ej: "Clientes Activos")
   value,           // Valor principal (ej: 120)

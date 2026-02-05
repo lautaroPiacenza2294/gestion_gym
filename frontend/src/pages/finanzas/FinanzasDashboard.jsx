@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import React from 'react';
 import Layout from '../../components/layout/Layout';
 import KPICard from '../../components/finanzas/KPICard';
 import ListaPagos from '../../components/finanzas/ListaPagos';

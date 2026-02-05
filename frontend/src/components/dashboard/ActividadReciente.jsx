@@ -1,3 +1,4 @@
+import React from 'react';
 import { FileText, DollarSign, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 
 const ActividadReciente = ({ actividades }) => {
