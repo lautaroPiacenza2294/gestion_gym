@@ -1,11 +1,24 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
+import Clientes from './pages/Clientes';
 import './components/layout/layout.css';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <Dashboard />
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/clientes" element={<Clientes />} />
+        
+        {/* Ruta temporal para reportes */}
+        <Route path="/reportes" element={
+          <div style={{padding: '2rem'}}>
+            <h1>Reportes - Próximamente</h1>
+          </div>
+        } />
+      </Routes>
     </div>
   );
 }
