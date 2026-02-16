@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 
-const FiltrosClientes = ({ onFilterChange, totalClientes, clientesFiltrados }) => {
+const FiltrosClientes = ({ onFilterChange, totalClientes = 0, clientesFiltrados = 0 }) => {
   const [busqueda, setBusqueda] = useState('');
   const [estado, setEstado] = useState('todos');
   const [ordenPor, setOrdenPor] = useState('nombre');
@@ -13,11 +13,12 @@ const FiltrosClientes = ({ onFilterChange, totalClientes, clientesFiltrados }) =
         busqueda: busqueda.trim().toLowerCase(),
         estado,
         ordenPor,
-        ordenDireccion
+        ordenDireccion,
       });
     }, 300);
+
     return () => clearTimeout(timer);
-  }, [busqueda, estado, ordenPor, ordenDireccion]);
+  }, [busqueda, estado, ordenPor, ordenDireccion, onFilterChange]);
 
   const limpiarFiltros = () => {
     setBusqueda('');
@@ -26,12 +27,17 @@ const FiltrosClientes = ({ onFilterChange, totalClientes, clientesFiltrados }) =
     setOrdenDireccion('asc');
   };
 
-  const hayFiltrosActivos = busqueda || estado !== 'todos' || ordenPor !== 'nombre';
+  const hayFiltrosActivos =
+    busqueda || estado !== 'todos' || ordenPor !== 'nombre' || ordenDireccion !== 'asc';
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow space-y-4 mb-4">
+    <div className="bg-white p-4 rounded-xl shadow space-y-4 mb-4" key="filtros-clientes">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          size={18}
+        />
+
         <input
           type="text"
           placeholder="Buscar por nombre, apellido o DNI..."
@@ -39,6 +45,7 @@ const FiltrosClientes = ({ onFilterChange, totalClientes, clientesFiltrados }) =
           onChange={(e) => setBusqueda(e.target.value)}
           className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
         />
+
         {busqueda && (
           <button
             onClick={() => setBusqueda('')}
@@ -50,20 +57,32 @@ const FiltrosClientes = ({ onFilterChange, totalClientes, clientesFiltrados }) =
       </div>
 
       <div className="grid md:grid-cols-4 gap-4">
-        <select value={estado} onChange={e => setEstado(e.target.value)} className="border rounded-lg p-2">
+        <select
+          value={estado}
+          onChange={(e) => setEstado(e.target.value)}
+          className="border rounded-lg p-2"
+        >
           <option value="todos">Todos</option>
           <option value="activos">Activos</option>
           <option value="inactivos">Inactivos</option>
         </select>
 
-        <select value={ordenPor} onChange={e => setOrdenPor(e.target.value)} className="border rounded-lg p-2">
+        <select
+          value={ordenPor}
+          onChange={(e) => setOrdenPor(e.target.value)}
+          className="border rounded-lg p-2"
+        >
           <option value="nombre">Nombre</option>
           <option value="apellido">Apellido</option>
           <option value="fecha_nacimiento">Fecha de Nacimiento</option>
           <option value="dni">DNI</option>
         </select>
 
-        <select value={ordenDireccion} onChange={e => setOrdenDireccion(e.target.value)} className="border rounded-lg p-2">
+        <select
+          value={ordenDireccion}
+          onChange={(e) => setOrdenDireccion(e.target.value)}
+          className="border rounded-lg p-2"
+        >
           <option value="asc">Ascendente</option>
           <option value="desc">Descendente</option>
         </select>
@@ -79,10 +98,16 @@ const FiltrosClientes = ({ onFilterChange, totalClientes, clientesFiltrados }) =
       </div>
 
       <div className="text-sm text-gray-600">
-        {hayFiltrosActivos
-          ? <>Mostrando <strong>{clientesFiltrados}</strong> de <strong>{totalClientes}</strong> clientes</>
-          : <>Total: <strong>{totalClientes}</strong> clientes</>
-        }
+        {hayFiltrosActivos ? (
+          <>
+            Mostrando <strong>{clientesFiltrados}</strong> de{' '}
+            <strong>{totalClientes}</strong> clientes
+          </>
+        ) : (
+          <>
+            Total: <strong>{totalClientes}</strong> clientes
+          </>
+        )}
       </div>
     </div>
   );

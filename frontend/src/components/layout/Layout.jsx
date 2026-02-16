@@ -4,21 +4,18 @@ import Header from './Header';
 
 const Layout = ({ children, title }) => {
   return (
-    <div className="flex h-screen bg-gray-50">
-      
-      {/* Sidebar fijo a la izquierda */}
+    <div className="flex min-h-screen bg-slate-50/50">
+      {/* Sidebar fijo */}
       <Sidebar />
 
-      {/* Área principal (Header + Contenido) */}
-      {/* ml-64 para compensar el ancho del sidebar fijo */}
+      {/* Área principal */}
       <div className="flex-1 flex flex-col ml-64">
-        
-        {/* Header en la parte superior */}
         <Header title={title} />
-
-        {/* Contenido que cambia según la página */}
-        <main className="flex-1 overflow-auto">
-          {children}
+        
+        <main className="flex-1 p-6 lg:p-10">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
