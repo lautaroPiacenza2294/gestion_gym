@@ -5,6 +5,9 @@ import BotonCrearCliente from '../components/clientes/BotonCrearCliente';
 import ModalCliente from '../components/clientes/ModalCliente';
 import { clientesAPI } from '../services';
 
+
+
+
 const Clientes = () => {
   const [refresh, setRefresh] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -60,6 +63,7 @@ const Clientes = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

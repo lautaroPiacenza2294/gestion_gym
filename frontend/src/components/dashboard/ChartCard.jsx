@@ -1,62 +1,58 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
 const ChartCard = ({ data, title }) => {
   return (
-    <div className="chart-card">
-      {/* Header del gráfico */}
-      <div className="chart-header">
-        <div className="chart-title-wrapper">
-          <TrendingUp size={24} className="chart-icon" />
-          <h3 className="chart-title">{title}</h3>
+    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 h-full">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+            <TrendingUp size={20} />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800">{title}</h3>
         </div>
       </div>
 
-      {/* Gráfico */}
-      <div className="chart-container">
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+      <div className="h-[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
             <XAxis 
               dataKey="dia" 
-              stroke="rgba(255,255,255,0.7)"
-              style={{ fontSize: '12px' }}
+              axisLine={false} 
+              tickLine={false} 
+              tick={{fill: '#94a3b8', fontSize: 12}} 
+              dy={10}
             />
             <YAxis 
-              stroke="rgba(255,255,255,0.7)"
-              style={{ fontSize: '12px' }}
+              axisLine={false} 
+              tickLine={false} 
+              tick={{fill: '#94a3b8', fontSize: 12}} 
             />
             <Tooltip 
               contentStyle={{
-                backgroundColor: '#1e293b',
+                borderRadius: '16px',
                 border: 'none',
-                borderRadius: '8px',
-                color: '#fff'
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                padding: '12px'
               }}
             />
-            <Legend 
-              wrapperStyle={{
-                paddingTop: '20px'
-              }}
-            />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="ingresos" 
               stroke="#10b981" 
-              strokeWidth={3}
-              dot={{ fill: '#10b981', r: 4 }}
-              name="Ingresos"
+              strokeWidth={3} 
+              fillOpacity={1} 
+              fill="url(#colorIngresos)" 
             />
-            <Line 
-              type="monotone" 
-              dataKey="egresos" 
-              stroke="#ef4444" 
-              strokeWidth={3}
-              dot={{ fill: '#ef4444', r: 4 }}
-              name="Egresos"
-            />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>

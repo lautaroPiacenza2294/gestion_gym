@@ -42,3 +42,6 @@ export { default as api } from './axiosConfig';
 
 // Exportar funciones base (por si quieres crear nuevas APIs)
 export { createCrudAPI, createExtendedAPI } from './baseAPI';
+
+// Exportar API del dashboard
+export { default as dashboardService } from './dashboardService'; 

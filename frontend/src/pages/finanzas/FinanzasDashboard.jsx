@@ -106,7 +106,7 @@ const FinanzasDashboard = () => {
                 Resumen del mes actual
               </p>
             </div>
-
+            
             <div className="flex gap-3">
               <button
                 onClick={() => navigate('/finanzas/pagos')}
@@ -143,7 +143,6 @@ const FinanzasDashboard = () => {
                   text-white font-medium
                   px-4 py-2 rounded-lg
                   transition-colors duration-200
-                  flex items-center gap-2
                 "
               >
                 Gastos Fijos

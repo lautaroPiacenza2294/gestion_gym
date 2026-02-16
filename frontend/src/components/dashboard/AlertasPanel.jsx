@@ -1,49 +1,25 @@
+// src/components/dashboard/AlertasPanel.jsx
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
-const AlertasPanel = ({ alertas }) => {
-  // Función para obtener el color según el tipo
-  const getAlertColor = (tipo) => {
-    const colores = {
-      danger: '#fee2e2',    // Rojo claro
-      warning: '#fef3c7',   // Amarillo claro
-      success: '#dcfce7',   // Verde claro
-    };
-    return colores[tipo] || colores.warning;
-  };
-
-  const getAlertBorder = (tipo) => {
-    const colores = {
-      danger: '#ef4444',    // Rojo
-      warning: '#f59e0b',   // Amarillo
-      success: '#22c55e',   // Verde
-    };
-    return colores[tipo] || colores.warning;
-  };
-
+const AlertasPanel = ({ alertas = [] }) => {
   return (
-    <div className="alertas-panel">
-      {/* Header */}
-      <div className="alertas-header">
-        <AlertTriangle size={20} className="alertas-icon" />
-        <h3 className="alertas-title">Alertas Importantes</h3>
+    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 h-full">
+      <div className="flex items-center space-x-3 mb-8">
+        <Bell className="text-slate-400" size={20} />
+        <h3 className="text-lg font-bold text-slate-800">Alertas</h3>
       </div>
 
-      {/* Lista de alertas */}
-      <div className="alertas-list">
+      <div className="space-y-4">
         {alertas.map((alerta, index) => (
           <div 
             key={index} 
-            className="alerta-item"
-            style={{
-              backgroundColor: getAlertColor(alerta.tipo),
-              borderLeftColor: getAlertBorder(alerta.tipo)
-            }}
+            className={`${alerta.bg} ${alerta.border} border p-4 rounded-2xl flex items-center space-x-4`}
           >
-            <div className="alerta-content">
-              <h4 className="alerta-numero">{alerta.cantidad}</h4>
-              <p className="alerta-titulo">{alerta.titulo}</p>
-              <p className="alerta-descripcion">{alerta.descripcion}</p>
+            <span className={`text-2xl font-black ${alerta.text}`}>{alerta.cantidad}</span>
+            <div>
+              <p className={`font-bold text-sm ${alerta.text}`}>{alerta.titulo}</p>
+              <p className="text-xs text-slate-500 font-medium">{alerta.desc}</p>
             </div>
           </div>
         ))}
