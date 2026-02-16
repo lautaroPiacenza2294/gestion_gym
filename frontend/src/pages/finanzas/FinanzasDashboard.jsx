@@ -4,7 +4,7 @@ import Layout from '../../components/layout/Layout';
 import KPICard from '../../components/finanzas/KPICard';
 import ListaPagos from '../../components/finanzas/ListaPagos';
 import ListaEgresos from '../../components/finanzas/ListaEgresos';
-import { pagosAPI, egresosAPI } from '../../services/finanzas';
+import { pagosAPI, egresosAPI, gastosFijosAPI } from '../../services/finanzas';
 import { useNavigate } from 'react-router-dom';
 
 const FinanzasDashboard = () => {
@@ -16,8 +16,9 @@ const FinanzasDashboard = () => {
   
   const [totalIngresos, setTotalIngresos] = useState(0);
   const [totalEgresos, setTotalEgresos] = useState(0);
+  const [totalGastosFijos, setTotalGastosFijos] = useState(0);
   const [balance, setBalance] = useState(0);
-  
+
   const [ultimosPagos, setUltimosPagos] = useState([]);
   const [ultimosEgresos, setUltimosEgresos] = useState([]);
 
@@ -40,16 +41,21 @@ const FinanzasDashboard = () => {
   const cargarTotales = async () => {
     setLoading(true);
     try {
-      const resIngresos = await pagosAPI.getTotalMes();
+      const [resIngresos, resEgresos, resGastosFijos] = await Promise.all([
+        pagosAPI.getTotalMes(),
+        egresosAPI.getTotalMes(),
+        gastosFijosAPI.getTotalMensual(),
+      ]);
+
       const ingresos = resIngresos.data.total || 0;
-      setTotalIngresos(ingresos);
-
-      const resEgresos = await egresosAPI.getTotalMes();
       const egresos = resEgresos.data.total || 0;
-      setTotalEgresos(egresos);
+      const gastosFijos = resGastosFijos.data.total || 0;
 
+      setTotalIngresos(ingresos);
+      setTotalEgresos(egresos);
+      setTotalGastosFijos(gastosFijos);
       setBalance(ingresos - egresos);
-      
+
     } catch (error) {
       console.error('Error al cargar totales:', error);
     } finally {
@@ -85,10 +91,6 @@ const FinanzasDashboard = () => {
     }
   };
 
-  const handleRegistrarPago = () => {
-    navigate('/finanzas/pagos'); 
-  };
-
   // ==================== RENDER ====================
   
   return (
@@ -97,31 +99,60 @@ const FinanzasDashboard = () => {
       <div className="finanzas-module">
         <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
           
-          {/* Header con botón de acción */}
+          {/* Header con botones de acción */}
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-600 mt-1">
                 Resumen del mes actual
               </p>
             </div>
-            
-            <button
-              onClick={handleRegistrarPago}
-              className="
-                bg-blue-600 hover:bg-blue-700
-                text-white font-medium
-                px-4 py-2 rounded-lg
-                transition-colors duration-200
-                flex items-center gap-2
-              "
-            >
-              <span className="text-lg">➕</span>
-              Registrar Pago
-            </button>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/finanzas/pagos')}
+                className="
+                  bg-blue-600 hover:bg-blue-700
+                  text-white font-medium
+                  px-4 py-2 rounded-lg
+                  transition-colors duration-200
+                  flex items-center gap-2
+                "
+              >
+                <span className="text-lg">+</span>
+                Pagos
+              </button>
+
+              <button
+                onClick={() => navigate('/finanzas/egresos')}
+                className="
+                  bg-red-500 hover:bg-red-600
+                  text-white font-medium
+                  px-4 py-2 rounded-lg
+                  transition-colors duration-200
+                  flex items-center gap-2
+                "
+              >
+                <span className="text-lg">+</span>
+                Egresos
+              </button>
+
+              <button
+                onClick={() => navigate('/finanzas/gastos-fijos')}
+                className="
+                  bg-orange-500 hover:bg-orange-600
+                  text-white font-medium
+                  px-4 py-2 rounded-lg
+                  transition-colors duration-200
+                  flex items-center gap-2
+                "
+              >
+                Gastos Fijos
+              </button>
+            </div>
           </div>
 
-          {/* KPIs - 3 tarjetas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* KPIs - 4 tarjetas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KPICard
               title="Ingresos del Mes"
               value={totalIngresos}
@@ -129,7 +160,7 @@ const FinanzasDashboard = () => {
               color="green"
               loading={loading}
             />
-            
+
             <KPICard
               title="Egresos del Mes"
               value={totalEgresos}
@@ -137,7 +168,15 @@ const FinanzasDashboard = () => {
               color="red"
               loading={loading}
             />
-            
+
+            <KPICard
+              title="Gastos Fijos / Mes"
+              value={totalGastosFijos}
+              icon="📋"
+              color="orange"
+              loading={loading}
+            />
+
             <KPICard
               title="Balance del Mes"
               value={balance}
@@ -149,15 +188,31 @@ const FinanzasDashboard = () => {
 
           {/* Listas - 2 columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ListaPagos 
-              pagos={ultimosPagos}
-              loading={loadingPagos}
-            />
-            
-            <ListaEgresos 
-              egresos={ultimosEgresos}
-              loading={loadingEgresos}
-            />
+            <div>
+              <ListaPagos
+                pagos={ultimosPagos}
+                loading={loadingPagos}
+              />
+              <button
+                onClick={() => navigate('/finanzas/pagos')}
+                className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium w-full text-center py-2"
+              >
+                Ver todos los pagos →
+              </button>
+            </div>
+
+            <div>
+              <ListaEgresos
+                egresos={ultimosEgresos}
+                loading={loadingEgresos}
+              />
+              <button
+                onClick={() => navigate('/finanzas/egresos')}
+                className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium w-full text-center py-2"
+              >
+                Ver todos los egresos →
+              </button>
+            </div>
           </div>
 
         </div>
