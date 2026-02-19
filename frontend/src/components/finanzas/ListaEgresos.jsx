@@ -30,6 +30,7 @@ const ListaEgresos = ({ egresos = [], loading = false }) => {
   // Traduce la categoría a texto legible
   const traducirCategoria = (categoria) => {
     const traducciones = {
+      'gastos_fijos': 'Gastos Fijos',
       'equipamiento': 'Equipamiento',
       'mantenimiento': 'Mantenimiento',
       'reparaciones': 'Reparaciones',
