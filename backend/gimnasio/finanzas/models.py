@@ -78,6 +78,7 @@ class GastoFijo(models.Model):
 class Egreso(models.Model):
     """Egresos y gastos variables del gimnasio"""
     CATEGORIA_CHOICES = [
+        ('gastos_fijos', 'Gastos Fijos'),
         ('equipamiento', 'Equipamiento'),
         ('mantenimiento', 'Mantenimiento'),
         ('reparaciones', 'Reparaciones'),

@@ -4,6 +4,8 @@ import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
 import FinanzasDashboard from './pages/finanzas/FinanzasDashboard';
 import PagosPage from './pages/finanzas/PagosPage';
+import EgresosPage from './pages/finanzas/EgresosPage';
+import GastosFijosPage from './pages/finanzas/GastosFijosPage';
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/finanzas" element={<FinanzasDashboard />} />
         <Route path="/finanzas/pagos" element={<PagosPage />} />
+        <Route path="/finanzas/egresos" element={<EgresosPage />} />
+        <Route path="/finanzas/gastos-fijos" element={<GastosFijosPage />} />
         
         {/* Ruta temporal para reportes */}
         <Route path="/reportes" element={
