@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { RefreshCcw, UserPlus, SearchX, AlertCircle, Loader2 } from 'lucide-react';
-import { clientesAPI } from '../../services';
+import { clientesAPI, membresiasAPI } from '../../services';
 import TablaClientes from './TablaClientes';
 import FiltrosClientes from './FiltrosClientes';
 
 const ListaClientes = ({ onVerDetalle, onEditar, onEliminar, refresh }) => {
   const [clientes, setClientes] = useState([]);
+  const [membresiasMap, setMembresiasMap] = useState({});
+  const [pendientesPagoIds, setPendientesPagoIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtros, setFiltros] = useState({
@@ -19,8 +21,31 @@ const ListaClientes = ({ onVerDetalle, onEditar, onEliminar, refresh }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await clientesAPI.getAll();
-      setClientes(response.data);
+      const [clientesRes, membresiasRes, sinPagoRes] = await Promise.all([
+        clientesAPI.getAll(),
+        membresiasAPI.getAll(),
+        membresiasAPI.getSinPago(),
+      ]);
+      setClientes(clientesRes.data);
+
+      // Armar mapa clienteId → membresía más reciente
+      const lista = Array.isArray(membresiasRes.data)
+        ? membresiasRes.data
+        : (membresiasRes.data?.results || []);
+      const mapa = {};
+      lista.forEach(mem => {
+        const cid = mem.cliente;
+        if (!mapa[cid] || new Date(mem.fecha_fin) > new Date(mapa[cid].fecha_fin)) {
+          mapa[cid] = mem;
+        }
+      });
+      setMembresiasMap(mapa);
+
+      // Armar set de clienteIds con membresía activa pero sin pago
+      const sinPagoLista = Array.isArray(sinPagoRes.data)
+        ? sinPagoRes.data
+        : (sinPagoRes.data?.results || []);
+      setPendientesPagoIds(new Set(sinPagoLista.map(m => m.cliente)));
     } catch (err) {
       console.error('Error cargando clientes:', err);
       setError('No pudimos conectar con el servidor. Verifica tu conexión.');
@@ -162,8 +187,10 @@ const ListaClientes = ({ onVerDetalle, onEditar, onEliminar, refresh }) => {
         </div>
       ) : (
         <div className="transform transition-all">
-          <TablaClientes 
+          <TablaClientes
             clientes={clientesFiltrados}
+            membresiasMap={membresiasMap}
+            pendientesPagoIds={pendientesPagoIds}
             onVerDetalle={onVerDetalle}
             onEditar={onEditar}
             onEliminar={onEliminar}

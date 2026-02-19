@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout';
 import ListaClientes from '../components/clientes/ListaClientes';
 import BotonCrearCliente from '../components/clientes/BotonCrearCliente';
 import ModalCliente from '../components/clientes/ModalCliente';
+import ModalDetalleCliente from '../components/clientes/ModalDetalleCliente';
 import { clientesAPI } from '../services';
 
 
@@ -12,6 +13,8 @@ const Clientes = () => {
   const [refresh, setRefresh] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [clienteToEdit, setClienteToEdit] = useState(null);
+  const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+  const [clienteDetalle, setClienteDetalle] = useState(null);
 
   const refrescarLista = () => {
     setRefresh(prev => prev + 1);
@@ -28,8 +31,8 @@ const Clientes = () => {
   };
 
   const handleVerDetalle = (cliente) => {
-    console.log('Ver detalles de membresía:', cliente);
-    alert(`Ver detalles de membresía de ${cliente.nombre} ${cliente.apellido}`);
+    setClienteDetalle(cliente);
+    setModalDetalleOpen(true);
   };
 
   const handleEditar = (cliente) => {
@@ -84,12 +87,20 @@ const Clientes = () => {
           />
         </div>
 
-        {/* Modal */}
+        {/* Modal crear/editar */}
         <ModalCliente
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           onSuccess={handleSuccess}
           clienteToEdit={clienteToEdit}
+        />
+
+        {/* Modal detalle / renovación */}
+        <ModalDetalleCliente
+          isOpen={modalDetalleOpen}
+          onClose={() => setModalDetalleOpen(false)}
+          onSuccess={refrescarLista}
+          cliente={clienteDetalle}
         />
       </div>
     </Layout>

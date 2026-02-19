@@ -32,9 +32,14 @@ class PlanSerializer(serializers.ModelSerializer):
 
 class PlanListSerializer(serializers.ModelSerializer):
     """Serializer para listar planes"""
+    cantidad_membresias = serializers.SerializerMethodField()
+
     class Meta:
         model = Plan
-        fields = ['id', 'nombre', 'precio', 'activo']
+        fields = ['id', 'nombre', 'frecuencia_semanal', 'precio', 'activo', 'cantidad_membresias']
+
+    def get_cantidad_membresias(self, obj):
+        return obj.membresias.filter(estado='activa').count()
 
 
 class PlanCreateSerializer(serializers.ModelSerializer):
@@ -89,17 +94,22 @@ class MembresiaSerializer(serializers.ModelSerializer):
 class MembresiaListSerializer(serializers.ModelSerializer):
     """Serializer para listar membresías"""
     nombre = serializers.SerializerMethodField()
+    plan_nombre = serializers.CharField(source='plan.nombre', read_only=True)
     plan = serializers.CharField(source='plan.nombre', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
     estado = serializers.CharField(source='get_estado_display', read_only=True)
     dias_restantes = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Membresia
-        fields = ['id', 'nombre', 'plan', 'estado', 'dias_restantes']
-    
+        fields = [
+            'id', 'cliente', 'nombre', 'plan', 'plan_nombre',
+            'fecha_fin', 'estado', 'estado_display', 'dias_restantes'
+        ]
+
     def get_nombre(self, obj):
         return f"{obj.cliente.nombre} {obj.cliente.apellido}"
-    
+
     def get_dias_restantes(self, obj):
         from datetime import date
         hoy = date.today()

@@ -4,6 +4,8 @@ import Layout from '../../components/layout/Layout';
 import KPICard from '../../components/finanzas/KPICard';
 import ListaPagos from '../../components/finanzas/ListaPagos';
 import ListaEgresos from '../../components/finanzas/ListaEgresos';
+import PendientesPago from '../../components/shared/PendientesPago';
+import { pagosAPI, egresosAPI } from '../../services/finanzas';
 import ModalEgreso from '../../components/finanzas/ModalEgreso';
 import { pagosAPI, egresosAPI, gastosFijosAPI } from '../../services/finanzas';
 import { useNavigate } from 'react-router-dom';
@@ -241,8 +243,20 @@ const FinanzasDashboard = () => {
             />
           </div>
 
+          {/* Pagos pendientes */}
+          <PendientesPago />
+
           {/* Listas - 2 columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ListaPagos
+              pagos={ultimosPagos}
+              loading={loadingPagos}
+            />
+
+            <ListaEgresos
+              egresos={ultimosEgresos}
+              loading={loadingEgresos}
+            />
             <div>
               <ListaPagos
                 pagos={ultimosPagos}

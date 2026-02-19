@@ -106,3 +106,16 @@ class MembresiaViewSet(viewsets.ModelViewSet):
         
         serializer = MembresiaListSerializer(membresias, many=True)
         return Response(serializer.data)
+    @action(detail=False, methods=['get'])
+    def sin_pago(self, request):
+        """Membresías activas que no tienen ningún pago registrado"""
+        from django.db.models import Count
+        membresias = Membresia.objects.filter(
+            estado='activa'
+        ).annotate(
+            num_pagos=Count('pagos')
+        ).filter(
+            num_pagos=0
+        )
+        serializer = MembresiaSerializer(membresias, many=True)
+        return Response(serializer.data)

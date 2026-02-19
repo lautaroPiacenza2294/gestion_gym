@@ -1,11 +1,12 @@
 // src/pages/Dashboard.jsx
 import React from 'react';
-import { Users, CreditCard, DollarSign, AlertCircle } from 'lucide-react';
+import { Users, CreditCard, UserPlus, AlertTriangle, AlertCircle } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import KPICard from '../components/dashboard/KPICard';
-import ChartCard from '../components/dashboard/ChartCard';
+import GraficoSociosPorPlan from '../components/dashboard/GraficoSociosPorPlan';
 import AlertasPanel from '../components/dashboard/AlertasPanel';
 import ActividadReciente from '../components/dashboard/ActividadReciente';
+import PendientesPago from '../components/shared/PendientesPago';
 import { useDashboard } from '../hooks/useDashboard';
 
 const Dashboard = () => {
@@ -69,22 +70,22 @@ const Dashboard = () => {
       trend: kpis?.membresias_activas?.trend || 'up'
     },
     {
-      title: 'Ingresos del Mes',
-      value: kpis?.ingresos_mes?.value || '$0',
-      icon: <DollarSign size={24} />,
+      title: 'Vencen esta semana',
+      value: kpis?.membresias_por_vencer?.value || '0',
+      icon: <AlertTriangle size={24} />,
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600',
-      change: kpis?.ingresos_mes?.change || '0%',
-      trend: kpis?.ingresos_mes?.trend || 'up'
+      change: kpis?.membresias_por_vencer?.change || 'próx. 7 días',
+      trend: kpis?.membresias_por_vencer?.trend || 'down'
     },
     {
-      title: 'Clientes Morosos',
-      value: kpis?.clientes_morosos?.value || '0',
-      icon: <AlertCircle size={24} />,
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
-      change: kpis?.clientes_morosos?.change || '0',
-      trend: kpis?.clientes_morosos?.trend || 'down'
+      title: 'Nuevos este mes',
+      value: kpis?.nuevos_socios_mes?.value || '0',
+      icon: <UserPlus size={24} />,
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600',
+      change: kpis?.nuevos_socios_mes?.change || '0%',
+      trend: kpis?.nuevos_socios_mes?.trend || 'up'
     }
   ];
 
@@ -101,15 +102,15 @@ const Dashboard = () => {
         {/* Gráfico y Alertas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <ChartCard 
-              data={chartData || []} 
-              title="Balance de Ingresos vs Egresos" 
-            />
+            <GraficoSociosPorPlan data={chartData || []} />
           </div>
           <div className="lg:col-span-1">
             <AlertasPanel alertas={alertas || []} />
           </div>
         </div>
+
+        {/* Pagos pendientes */}
+        <PendientesPago />
 
         {/* Actividad */}
         <ActividadReciente actividades={actividad || []} />
