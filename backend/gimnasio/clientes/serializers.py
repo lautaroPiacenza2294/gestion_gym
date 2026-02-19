@@ -54,6 +54,7 @@ class ClienteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
         fields = [
+            'id',
             'nombre',
             'apellido',
             'dni',
@@ -65,6 +66,7 @@ class ClienteCreateSerializer(serializers.ModelSerializer):
             'activo',
             'observaciones'
         ]
+        read_only_fields = ['id']
     
     def validate_dni(self, value):
         """Validar que el DNI tenga 8 dígitos"""

@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
 import FinanzasDashboard from './pages/finanzas/FinanzasDashboard';
 import PagosPage from './pages/finanzas/PagosPage';
+import Planes from './pages/Planes';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/finanzas" element={<FinanzasDashboard />} />
         <Route path="/finanzas/pagos" element={<PagosPage />} />
+        <Route path="/membresias" element={<Planes />} />
         
         {/* Ruta temporal para reportes */}
         <Route path="/reportes" element={

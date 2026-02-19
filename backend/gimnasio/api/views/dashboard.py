@@ -1,12 +1,12 @@
 # api/views/dashboard.py
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from datetime import datetime, timedelta, date
 
 from clientes.models import Cliente, Recordatorio
-from membresias.models import Membresia
-from finanzas.models import Pago, Egreso, EstadoCuenta
+from membresias.models import Membresia, Plan
+from finanzas.models import Pago
 
 
 @api_view(['GET'])
@@ -14,84 +14,84 @@ def dashboard_overview(request):
     """
     Endpoint único que devuelve TODO lo que necesita el Dashboard.
     GET /api/dashboard/overview/
-    
+
     Devuelve:
-    - KPIs (4 tarjetas principales)
-    - Datos del gráfico (ingresos vs egresos)
-    - Alertas (membresías por vencer, recordatorios, gastos)
-    - Actividad reciente (pagos, nuevos clientes, renovaciones)
+    - KPIs (4 tarjetas — sin datos monetarios)
+    - Datos del gráfico (socios por plan)
+    - Alertas (membresías por vencer, recordatorios, socios sin membresía)
+    - Actividad reciente (nuevos clientes, renovaciones — sin pagos)
     """
-    
+
     hoy = date.today()
     mes_actual = hoy.month
     ano_actual = hoy.year
-    
+
     # Calcular mes anterior
     primer_dia_mes = hoy.replace(day=1)
     ultimo_dia_mes_anterior = primer_dia_mes - timedelta(days=1)
     mes_anterior = ultimo_dia_mes_anterior.month
     ano_anterior = ultimo_dia_mes_anterior.year
-    
+
     # ============================================
     # 1. CALCULAR KPIs
     # ============================================
-    
+
     # --- CLIENTES ACTIVOS ---
     clientes_activos = Cliente.objects.filter(activo=True).count()
-    
-    # Clientes activos el mes anterior
+
     clientes_mes_anterior = Cliente.objects.filter(
         activo=True,
         fecha_registro__lt=primer_dia_mes
     ).count()
-    
-    # Calcular cambio porcentual
+
     if clientes_mes_anterior > 0:
         cambio_clientes = round(
             ((clientes_activos - clientes_mes_anterior) / clientes_mes_anterior) * 100
         )
     else:
         cambio_clientes = 100 if clientes_activos > 0 else 0
-    
+
     # --- MEMBRESÍAS ACTIVAS ---
     membresias_activas = Membresia.objects.filter(estado='activa').count()
-    
-    # Membresías del mes anterior
+
     membresias_mes_anterior = Membresia.objects.filter(
         estado='activa',
         fecha_inicio__lt=primer_dia_mes
     ).count()
-    
+
     if membresias_mes_anterior > 0:
         cambio_membresias = round(
             ((membresias_activas - membresias_mes_anterior) / membresias_mes_anterior) * 100
         )
     else:
         cambio_membresias = 100 if membresias_activas > 0 else 0
-    
-    # --- INGRESOS DEL MES ---
-    ingresos_mes = Pago.objects.filter(
-        fecha_pago__year=ano_actual,
-        fecha_pago__month=mes_actual
-    ).aggregate(total=Sum('monto'))['total'] or 0
-    
-    # Ingresos del mes anterior
-    ingresos_mes_anterior = Pago.objects.filter(
-        fecha_pago__year=ano_anterior,
-        fecha_pago__month=mes_anterior
-    ).aggregate(total=Sum('monto'))['total'] or 0
-    
-    if ingresos_mes_anterior > 0:
-        cambio_ingresos = round(
-            ((ingresos_mes - ingresos_mes_anterior) / ingresos_mes_anterior) * 100
+
+    # --- MEMBRESÍAS POR VENCER (próximos 7 días) ---
+    fecha_limite = hoy + timedelta(days=7)
+    membresias_por_vencer = Membresia.objects.filter(
+        estado='activa',
+        fecha_fin__gte=hoy,
+        fecha_fin__lte=fecha_limite
+    ).count()
+
+    # --- NUEVOS SOCIOS ESTE MES ---
+    nuevos_socios_mes = Cliente.objects.filter(
+        fecha_registro__year=ano_actual,
+        fecha_registro__month=mes_actual
+    ).count()
+
+    nuevos_socios_mes_anterior = Cliente.objects.filter(
+        fecha_registro__year=ano_anterior,
+        fecha_registro__month=mes_anterior
+    ).count()
+
+    if nuevos_socios_mes_anterior > 0:
+        cambio_nuevos = round(
+            ((nuevos_socios_mes - nuevos_socios_mes_anterior) / nuevos_socios_mes_anterior) * 100
         )
     else:
-        cambio_ingresos = 100 if ingresos_mes > 0 else 0
-    
-    # --- CLIENTES MOROSOS ---
-    clientes_morosos = EstadoCuenta.objects.filter(estado='debe').count()
-    
-    # Estructura de KPIs
+        cambio_nuevos = 100 if nuevos_socios_mes > 0 else 0
+
     kpis = {
         'clientes_activos': {
             'value': clientes_activos,
@@ -103,72 +103,52 @@ def dashboard_overview(request):
             'change': f"{abs(cambio_membresias)}%",
             'trend': 'up' if cambio_membresias >= 0 else 'down'
         },
-        'ingresos_mes': {
-            'value': f"${int(ingresos_mes):,}",
-            'change': f"{abs(cambio_ingresos)}%",
-            'trend': 'up' if cambio_ingresos >= 0 else 'down'
+        'membresias_por_vencer': {
+            'value': membresias_por_vencer,
+            'change': 'proximos 7 dias',
+            'trend': 'down' if membresias_por_vencer > 0 else 'up'
         },
-        'clientes_morosos': {
-            'value': clientes_morosos,
-            'change': '3',
-            'trend': 'down'
+        'nuevos_socios_mes': {
+            'value': nuevos_socios_mes,
+            'change': f"{abs(cambio_nuevos)}%",
+            'trend': 'up' if cambio_nuevos >= 0 else 'down'
         }
     }
-    
+
     # ============================================
-    # 2. DATOS PARA EL GRÁFICO
+    # 2. DATOS PARA EL GRÁFICO (Socios por Plan)
     # ============================================
-    
-    chart_data = []
-    dias_muestra = [1, 5, 10, 15, 20, 25, 30]
-    
-    for dia in dias_muestra:
-        # Ingresos acumulados hasta ese día
-        ingresos_hasta_dia = Pago.objects.filter(
-            fecha_pago__year=ano_actual,
-            fecha_pago__month=mes_actual,
-            fecha_pago__day__lte=dia
-        ).aggregate(total=Sum('monto'))['total'] or 0
-        
-        # Egresos acumulados hasta ese día
-        egresos_hasta_dia = Egreso.objects.filter(
-            fecha__year=ano_actual,
-            fecha__month=mes_actual,
-            fecha__day__lte=dia
-        ).aggregate(total=Sum('monto'))['total'] or 0
-        
-        chart_data.append({
-            'dia': str(dia),
-            'ingresos': int(ingresos_hasta_dia),
-            'egresos': int(egresos_hasta_dia)
-        })
-    
+
+    planes_data = list(
+        Plan.objects.annotate(
+            total=Count('membresias', filter=Q(membresias__estado='activa'))
+        ).values('nombre', 'total').order_by('-total')
+    )
+
+    chart_data = planes_data
+
     # ============================================
     # 3. ALERTAS
     # ============================================
-    
-    # Membresías por vencer en los próximos 7 días
-    fecha_limite = hoy + timedelta(days=7)
-    membresias_por_vencer = Membresia.objects.filter(
-        estado='activa',
-        fecha_fin__gte=hoy,
-        fecha_fin__lte=fecha_limite
-    ).count()
-    
+
     # Recordatorios pendientes para hoy
     recordatorios_hoy = Recordatorio.objects.filter(
         estado='pendiente',
         fecha_programada__date=hoy
     ).count()
-    
-    # Gastos fijos próximos (simplificado por ahora)
-    gastos_proximos = 3
-    
+
+    # Socios activos sin ninguna membresía activa
+    socios_sin_membresia = Cliente.objects.filter(
+        activo=True
+    ).exclude(
+        membresias__estado='activa'
+    ).distinct().count()
+
     alertas = [
         {
             'cantidad': str(membresias_por_vencer),
-            'titulo': 'Membresías por vencer',
-            'desc': 'En los próximos 7 días',
+            'titulo': 'Membresias por vencer',
+            'desc': 'En los proximos 7 dias',
             'bg': 'bg-red-50',
             'text': 'text-red-700',
             'border': 'border-red-100'
@@ -176,42 +156,30 @@ def dashboard_overview(request):
         {
             'cantidad': str(recordatorios_hoy),
             'titulo': 'Recordatorios hoy',
-            'desc': 'Pendientes de revisión',
+            'desc': 'Pendientes de revision',
             'bg': 'bg-amber-50',
             'text': 'text-amber-700',
             'border': 'border-amber-100'
         },
         {
-            'cantidad': str(gastos_proximos),
-            'titulo': 'Gastos próximos',
-            'desc': 'Vencen esta semana',
-            'bg': 'bg-emerald-50',
-            'text': 'text-emerald-700',
-            'border': 'border-emerald-100'
+            'cantidad': str(socios_sin_membresia),
+            'titulo': 'Socios sin membresia',
+            'desc': 'Clientes activos sin plan activo',
+            'bg': 'bg-blue-50',
+            'text': 'text-blue-700',
+            'border': 'border-blue-100'
         }
     ]
-    
+
     # ============================================
-    # 4. ACTIVIDAD RECIENTE
+    # 4. ACTIVIDAD RECIENTE (sin pagos ni montos)
     # ============================================
-    
+
     actividades = []
-    
-    # Últimos 3 pagos
-    ultimos_pagos = Pago.objects.select_related('cliente').order_by('-fecha_registro')[:3]
-    
-    for pago in ultimos_pagos:
-        actividades.append({
-            'tipo': 'pago',
-            'titulo': f'{pago.cliente.nombre} {pago.cliente.apellido} realizó un pago',
-            'desc': f'Pago de {pago.get_concepto_display()} - ${pago.monto:,}',
-            'hora': calcular_hora_relativa(pago.fecha_registro),
-            'color': 'bg-emerald-500'
-        })
-    
-    # Últimos 2 clientes nuevos
-    nuevos_clientes = Cliente.objects.filter(activo=True).order_by('-fecha_registro')[:2]
-    
+
+    # Ultimos 3 clientes nuevos
+    nuevos_clientes = Cliente.objects.filter(activo=True).order_by('-fecha_registro')[:3]
+
     for cliente in nuevos_clientes:
         actividades.append({
             'tipo': 'cliente_nuevo',
@@ -220,28 +188,28 @@ def dashboard_overview(request):
             'hora': calcular_hora_relativa(cliente.fecha_registro),
             'color': 'bg-indigo-500'
         })
-    
-    # Últimas 2 renovaciones
+
+    # Ultimas 3 renovaciones
     renovaciones = Membresia.objects.filter(
         estado='activa'
-    ).select_related('cliente', 'plan').order_by('-fecha_creacion')[:2]
-    
+    ).select_related('cliente', 'plan').order_by('-fecha_creacion')[:3]
+
     for membresia in renovaciones:
         actividades.append({
             'tipo': 'renovacion',
-            'titulo': 'Renovación de membresía',
+            'titulo': 'Membresia renovada',
             'desc': f'{membresia.cliente.nombre} {membresia.cliente.apellido} - {membresia.plan.nombre}',
             'hora': calcular_hora_relativa(membresia.fecha_creacion),
             'color': 'bg-amber-500'
         })
-    
-    # Tomar solo las últimas 5 actividades
+
+    # Tomar solo las 5 mas recientes
     actividades = actividades[:5]
-    
+
     # ============================================
     # RESPUESTA FINAL
     # ============================================
-    
+
     return Response({
         'kpis': kpis,
         'chart_data': chart_data,
@@ -253,17 +221,15 @@ def dashboard_overview(request):
 def calcular_hora_relativa(fecha):
     """
     Convierte una fecha en texto relativo.
-    Ej: "Hace 2h", "Ayer", "Hace 3 días"
+    Ej: "Hace 2h", "Ayer", "Hace 3 dias"
     """
-    # Hacer la fecha "naive" (sin timezone) para comparar
     ahora = datetime.now()
-    
+
     if fecha.tzinfo is not None:
         fecha = fecha.replace(tzinfo=None)
-    
+
     diferencia = ahora - fecha
-    
-    # Hoy
+
     if diferencia.days == 0:
         horas = diferencia.seconds // 3600
         if horas == 0:
@@ -272,15 +238,12 @@ def calcular_hora_relativa(fecha):
                 return "Ahora"
             return f"Hace {minutos} min"
         return f"Hace {horas}h"
-    
-    # Ayer
+
     elif diferencia.days == 1:
         return "Ayer"
-    
-    # Hace X días
+
     elif diferencia.days < 7:
-        return f"Hace {diferencia.days} días"
-    
-    # Fecha exacta
+        return f"Hace {diferencia.days} dias"
+
     else:
         return fecha.strftime("%d/%m/%Y")
