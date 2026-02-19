@@ -4,6 +4,7 @@ import Layout from '../../components/layout/Layout';
 import KPICard from '../../components/finanzas/KPICard';
 import ListaPagos from '../../components/finanzas/ListaPagos';
 import ListaEgresos from '../../components/finanzas/ListaEgresos';
+import ModalEgreso from '../../components/finanzas/ModalEgreso';
 import { pagosAPI, egresosAPI, gastosFijosAPI } from '../../services/finanzas';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +22,10 @@ const FinanzasDashboard = () => {
 
   const [ultimosPagos, setUltimosPagos] = useState([]);
   const [ultimosEgresos, setUltimosEgresos] = useState([]);
+  const [proximosVencimientos, setProximosVencimientos] = useState([]);
+  const [loadingVencimientos, setLoadingVencimientos] = useState(true);
+  const [modalPagarOpen, setModalPagarOpen] = useState(false);
+  const [gastoAPagar, setGastoAPagar] = useState(null);
 
   // ==================== EFECTOS ====================
   
@@ -35,6 +40,7 @@ const FinanzasDashboard = () => {
       cargarTotales(),
       cargarUltimosPagos(),
       cargarUltimosEgresos(),
+      cargarProximosVencimientos(),
     ]);
   };
 
@@ -89,6 +95,56 @@ const FinanzasDashboard = () => {
     } finally {
       setLoadingEgresos(false);
     }
+  };
+
+  const cargarProximosVencimientos = async () => {
+    setLoadingVencimientos(true);
+    try {
+      const response = await gastosFijosAPI.getProximosVencimientos();
+      setProximosVencimientos(response.data);
+    } catch (error) {
+      console.error('Error al cargar vencimientos:', error);
+      setProximosVencimientos([]);
+    } finally {
+      setLoadingVencimientos(false);
+    }
+  };
+
+  const formatearMoneda = (monto) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(monto);
+  };
+
+  const traducirCategoria = (categoria) => {
+    const traducciones = {
+      'alquiler': 'Alquiler',
+      'servicios': 'Servicios',
+      'internet': 'Internet/Tel.',
+      'salarios': 'Salarios',
+      'impuestos': 'Impuestos',
+      'seguro': 'Seguros',
+      'limpieza': 'Limpieza',
+      'otro': 'Otro',
+    };
+    return traducciones[categoria] || categoria;
+  };
+
+  const handlePagarGasto = (gasto) => {
+    setGastoAPagar({
+      descripcion: `Pago ${gasto.nombre}`,
+      monto: gasto.monto_mensual,
+      categoria: 'gastos_fijos',
+      observaciones: `Gasto fijo: ${gasto.nombre}`,
+    });
+    setModalPagarOpen(true);
+  };
+
+  const handlePagoExitoso = () => {
+    cargarDatos();
   };
 
   // ==================== RENDER ====================
@@ -214,8 +270,83 @@ const FinanzasDashboard = () => {
             </div>
           </div>
 
+          {/* Proximos vencimientos de gastos fijos */}
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Gastos Fijos - Proximos a Vencer (7 dias)
+              </h3>
+              <button
+                onClick={() => navigate('/finanzas/gastos-fijos')}
+                className="text-orange-600 hover:text-orange-800 text-sm font-medium"
+              >
+                Ver todos →
+              </button>
+            </div>
+
+            {loadingVencimientos ? (
+              <div className="text-center py-6 text-gray-400">
+                Cargando vencimientos...
+              </div>
+            ) : proximosVencimientos.length === 0 ? (
+              <div className="text-center py-6 text-gray-400">
+                No hay gastos proximos a vencer
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Nombre</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Categoria</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600">Monto</th>
+                      <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">Dia Vto.</th>
+                      <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {proximosVencimientos.map((gasto) => (
+                      <tr
+                        key={gasto.id}
+                        className="border-b border-gray-100 hover:bg-orange-50 transition-colors"
+                      >
+                        <td className="py-3 px-4 text-sm text-gray-900 font-medium">
+                          {gasto.nombre}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-600">
+                          {traducirCategoria(gasto.categoria)}
+                        </td>
+                        <td className="py-3 px-4 text-sm font-semibold text-orange-600 text-right">
+                          {formatearMoneda(gasto.monto_mensual)}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-600 text-center">
+                          {gasto.dia_vencimiento}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => handlePagarGasto(gasto)}
+                            className="bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-3 py-1 rounded-lg transition-colors"
+                          >
+                            Pagar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
+
+      <ModalEgreso
+        isOpen={modalPagarOpen}
+        onClose={() => { setModalPagarOpen(false); setGastoAPagar(null); }}
+        onSuccess={handlePagoExitoso}
+        prefillData={gastoAPagar}
+      />
     </Layout>
   );
 };

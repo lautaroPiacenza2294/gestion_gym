@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { egresosAPI } from '../../services/finanzas';
 
-const ModalEgreso = ({ isOpen, onClose, onSuccess, egresoToEdit = null }) => {
+const ModalEgreso = ({ isOpen, onClose, onSuccess, egresoToEdit = null, prefillData = null }) => {
   const isEditMode = !!egresoToEdit;
 
   const initialFormData = {
@@ -32,11 +32,19 @@ const ModalEgreso = ({ isOpen, onClose, onSuccess, egresoToEdit = null }) => {
           comprobante: egresoToEdit.comprobante || '',
           observaciones: egresoToEdit.observaciones || '',
         });
+      } else if (prefillData) {
+        setFormData({
+          ...initialFormData,
+          descripcion: prefillData.descripcion || '',
+          monto: prefillData.monto || '',
+          categoria: prefillData.categoria || 'otro',
+          observaciones: prefillData.observaciones || '',
+        });
       } else {
         setFormData(initialFormData);
       }
     }
-  }, [isOpen, egresoToEdit]);
+  }, [isOpen, egresoToEdit, prefillData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,13 +80,13 @@ const ModalEgreso = ({ isOpen, onClose, onSuccess, egresoToEdit = null }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
 
         {/* Header del Modal */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">
-            {isEditMode ? 'Editar Egreso' : 'Registrar Nuevo Egreso'}
+            {isEditMode ? 'Editar Egreso' : prefillData ? 'Pagar Gasto Fijo' : 'Registrar Nuevo Egreso'}
           </h2>
           <button
             onClick={handleClose}
@@ -118,6 +126,7 @@ const ModalEgreso = ({ isOpen, onClose, onSuccess, egresoToEdit = null }) => {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
+                <option value="gastos_fijos">Gastos Fijos</option>
                 <option value="equipamiento">Equipamiento</option>
                 <option value="mantenimiento">Mantenimiento</option>
                 <option value="reparaciones">Reparaciones</option>

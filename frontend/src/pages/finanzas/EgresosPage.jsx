@@ -79,6 +79,7 @@ const EgresosPage = () => {
 
   const traducirCategoria = (categoria) => {
     const traducciones = {
+      'gastos_fijos': 'Gastos Fijos',
       'equipamiento': 'Equipamiento',
       'mantenimiento': 'Mantenimiento',
       'reparaciones': 'Reparaciones',

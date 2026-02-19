@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import ModalGastoFijo from '../../components/finanzas/ModalGastoFijo';
+import ModalEgreso from '../../components/finanzas/ModalEgreso';
 import KPICard from '../../components/finanzas/KPICard';
 import { gastosFijosAPI } from '../../services/finanzas';
 
@@ -13,6 +14,8 @@ const GastosFijosPage = () => {
   const [totalMensual, setTotalMensual] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [gastoToEdit, setGastoToEdit] = useState(null);
+  const [modalPagarOpen, setModalPagarOpen] = useState(false);
+  const [gastoAPagar, setGastoAPagar] = useState(null);
 
   useEffect(() => {
     cargarDatos();
@@ -89,6 +92,16 @@ const GastosFijosPage = () => {
 
   const handleRegistroExitoso = () => {
     cargarDatos();
+  };
+
+  const handlePagarGasto = (gasto) => {
+    setGastoAPagar({
+      descripcion: `Pago ${gasto.nombre}`,
+      monto: gasto.monto_mensual,
+      categoria: 'gastos_fijos',
+      observaciones: `Gasto fijo: ${gasto.nombre}`,
+    });
+    setModalPagarOpen(true);
   };
 
   const formatearMoneda = (monto) => {
@@ -241,6 +254,14 @@ const GastosFijosPage = () => {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex justify-center gap-2">
+                          {gasto.activo && (
+                            <button
+                              onClick={() => handlePagarGasto(gasto)}
+                              className="bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-3 py-1 rounded-lg transition-colors"
+                            >
+                              Pagar
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEditar(gasto)}
                             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -281,6 +302,14 @@ const GastosFijosPage = () => {
         onClose={handleCerrarModal}
         onSuccess={handleRegistroExitoso}
         gastoToEdit={gastoToEdit}
+      />
+
+      {/* Modal para pagar gasto fijo */}
+      <ModalEgreso
+        isOpen={modalPagarOpen}
+        onClose={() => { setModalPagarOpen(false); setGastoAPagar(null); }}
+        onSuccess={() => cargarDatos()}
+        prefillData={gastoAPagar}
       />
     </Layout>
   );
