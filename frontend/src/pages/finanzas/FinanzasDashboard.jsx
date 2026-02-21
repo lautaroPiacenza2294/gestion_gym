@@ -5,9 +5,9 @@ import KPICard from '../../components/finanzas/KPICard';
 import ListaPagos from '../../components/finanzas/ListaPagos';
 import ListaEgresos from '../../components/finanzas/ListaEgresos';
 import PendientesPago from '../../components/shared/PendientesPago';
-import { pagosAPI, egresosAPI } from '../../services/finanzas';
-import ModalEgreso from '../../components/finanzas/ModalEgreso';
 import { pagosAPI, egresosAPI, gastosFijosAPI } from '../../services/finanzas';
+import { membresiasAPI } from '../../services';
+import ModalEgreso from '../../components/finanzas/ModalEgreso';
 import { useNavigate } from 'react-router-dom';
 
 const FinanzasDashboard = () => {
@@ -26,6 +26,11 @@ const FinanzasDashboard = () => {
   const [ultimosEgresos, setUltimosEgresos] = useState([]);
   const [proximosVencimientos, setProximosVencimientos] = useState([]);
   const [loadingVencimientos, setLoadingVencimientos] = useState(true);
+
+  // ── Métricas de eficiencia ──
+  const [pagosMesCount, setPagosMesCount] = useState(0);
+  const [sinPago, setSinPago] = useState([]);
+  const [loadingMetricas, setLoadingMetricas] = useState(true);
   const [modalPagarOpen, setModalPagarOpen] = useState(false);
   const [gastoAPagar, setGastoAPagar] = useState(null);
 
@@ -43,6 +48,7 @@ const FinanzasDashboard = () => {
       cargarUltimosPagos(),
       cargarUltimosEgresos(),
       cargarProximosVencimientos(),
+      cargarMetricas(),
     ]);
   };
 
@@ -75,13 +81,30 @@ const FinanzasDashboard = () => {
     setLoadingPagos(true);
     try {
       const response = await pagosAPI.getPagosMesActual();
-      const pagos = response.data.slice(0, 5);
-      setUltimosPagos(pagos);
+      const todosPagos = response.data;
+      setUltimosPagos(todosPagos.slice(0, 5));
+      // Guardar conteo total para métricas (solo concepto membresía)
+      const pagosMem = todosPagos.filter(p => p.concepto === 'membresia');
+      setPagosMesCount(pagosMem.length);
     } catch (error) {
       console.error('Error al cargar pagos:', error);
       setUltimosPagos([]);
     } finally {
       setLoadingPagos(false);
+    }
+  };
+
+  const cargarMetricas = async () => {
+    setLoadingMetricas(true);
+    try {
+      const res = await membresiasAPI.getSinPago();
+      const lista = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+      setSinPago(lista);
+    } catch (error) {
+      console.error('Error al cargar sin pago:', error);
+      setSinPago([]);
+    } finally {
+      setLoadingMetricas(false);
     }
   };
 
@@ -242,6 +265,89 @@ const FinanzasDashboard = () => {
               loading={loading}
             />
           </div>
+
+          {/* ── Métricas de Eficiencia ── */}
+          {(() => {
+            const totalActivas  = pagosMesCount + sinPago.length;
+            const tasaCobranza  = totalActivas > 0 ? Math.round((pagosMesCount / totalActivas) * 100) : 0;
+            const ticketPromedio = pagosMesCount > 0 ? Math.round(totalIngresos / pagosMesCount) : 0;
+            const margenNeto    = totalIngresos > 0
+              ? Math.round(((totalIngresos - totalEgresos - totalGastosFijos) / totalIngresos) * 100)
+              : 0;
+            const deudaPendiente = sinPago.reduce((acc, m) => acc + (parseFloat(m.precio_contratado) || 0), 0);
+
+            const metricas = [
+              {
+                label: 'Tasa de Cobranza',
+                valor: `${tasaCobranza}%`,
+                sub: `${pagosMesCount} cobrados · ${sinPago.length} pendientes`,
+                color: tasaCobranza >= 80 ? 'emerald' : tasaCobranza >= 50 ? 'amber' : 'rose',
+                icon: '📊',
+              },
+              {
+                label: 'Ticket Promedio',
+                valor: formatearMoneda(ticketPromedio),
+                sub: `Sobre ${pagosMesCount} pagos del mes`,
+                color: 'blue',
+                icon: '🎫',
+              },
+              {
+                label: 'Margen Neto',
+                valor: `${margenNeto}%`,
+                sub: 'Ingresos menos todos los gastos',
+                color: margenNeto >= 30 ? 'emerald' : margenNeto >= 10 ? 'amber' : 'rose',
+                icon: '📈',
+              },
+              {
+                label: 'Deuda Pendiente',
+                valor: formatearMoneda(deudaPendiente),
+                sub: `${sinPago.length} membresías sin cobrar`,
+                color: deudaPendiente === 0 ? 'emerald' : 'rose',
+                icon: '⏳',
+              },
+            ];
+
+            const colorMap = {
+              emerald: { border: 'border-emerald-500', badge: 'bg-emerald-50 text-emerald-700', icon: 'bg-emerald-50' },
+              amber:   { border: 'border-amber-500',   badge: 'bg-amber-50 text-amber-700',   icon: 'bg-amber-50' },
+              rose:    { border: 'border-rose-500',    badge: 'bg-rose-50 text-rose-700',    icon: 'bg-rose-50' },
+              blue:    { border: 'border-blue-500',    badge: 'bg-blue-50 text-blue-700',    icon: 'bg-blue-50' },
+            };
+
+            return (
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  Métricas de Eficiencia
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {metricas.map((m) => {
+                    const c = colorMap[m.color];
+                    return (
+                      <div
+                        key={m.label}
+                        className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${c.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`text-2xl w-10 h-10 flex items-center justify-center ${c.icon} rounded-lg`}>
+                            {m.icon}
+                          </div>
+                          <p className="text-sm text-gray-600 font-medium leading-tight">{m.label}</p>
+                        </div>
+                        {loadingMetricas || loading ? (
+                          <p className="text-base text-gray-400 italic">Cargando...</p>
+                        ) : (
+                          <>
+                            <p className="text-2xl font-bold text-gray-900">{m.valor}</p>
+                            <p className="text-xs text-gray-400 mt-1">{m.sub}</p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Pagos pendientes */}
           <PendientesPago />

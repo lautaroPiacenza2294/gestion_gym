@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   X, User, Mail, Phone, CreditCard, Calendar, RefreshCw,
   AlertCircle, Loader2, CheckCircle, XCircle, DollarSign,
-  ClipboardList, Banknote, ShieldAlert, UserCheck
+  ClipboardList, Banknote, ShieldAlert, UserCheck, History
 } from 'lucide-react';
 import { clientesAPI, membresiasAPI, planesAPI, pagosAPI } from '../../services';
 
@@ -58,6 +58,8 @@ const ModalDetalleCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
   const [submitting, setSubmitting]   = useState(false);
   const [activando, setActivando]     = useState(false);
   const [resultadoExito, setResultadoExito] = useState(null); // { mensaje, submensaje }
+  const [pagos, setPagos]             = useState([]);
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
   const [form, setForm] = useState(getEstadoInicial);
 
@@ -68,15 +70,17 @@ const ModalDetalleCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
     setError(null);
     setResultadoExito(null);
     setMostrarForm(false);
+    setMostrarHistorial(false);
     setForm(getEstadoInicial());
 
     const cargar = async () => {
       setLoading(true);
       try {
-        const [detRes, memRes, planRes] = await Promise.all([
+        const [detRes, memRes, planRes, pagosRes] = await Promise.all([
           clientesAPI.getById(cliente.id),
           membresiasAPI.getByCliente(cliente.id),
           planesAPI.getAll(),
+          pagosAPI.getByCliente(cliente.id),
         ]);
 
         setClienteDetalle(detRes.data);
@@ -94,6 +98,13 @@ const ModalDetalleCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
         const activos = (Array.isArray(planRes.data) ? planRes.data : (planRes.data?.results || []))
           .filter(p => p.activo);
         setPlanes(activos);
+
+        const listaPagos = Array.isArray(pagosRes.data)
+          ? pagosRes.data
+          : (pagosRes.data?.results || []);
+        // Ordenar del más reciente al más antiguo
+        listaPagos.sort((a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago));
+        setPagos(listaPagos);
       } catch {
         setError('No se pudo cargar la información del cliente');
       } finally {
@@ -340,6 +351,56 @@ const ModalDetalleCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-400 italic">Sin membresía registrada</p>
+                )}
+              </div>
+
+              {/* ── Historial de pagos ── */}
+              <div className="border border-gray-100 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setMostrarHistorial(p => !p)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <History size={15} className="text-gray-400" />
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Historial de pagos
+                    </span>
+                    {pagos.length > 0 && (
+                      <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">
+                        {pagos.length}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-gray-400 text-xs">{mostrarHistorial ? '▲' : '▼'}</span>
+                </button>
+
+                {mostrarHistorial && (
+                  <div className="border-t border-gray-100">
+                    {pagos.length === 0 ? (
+                      <p className="text-sm text-gray-400 italic text-center py-4">
+                        Sin pagos registrados
+                      </p>
+                    ) : (
+                      <ul className="divide-y divide-gray-50 max-h-52 overflow-y-auto">
+                        {pagos.map((pago) => (
+                          <li key={pago.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                            <div>
+                              <p className="font-medium text-gray-700">
+                                {formatFecha(pago.fecha_pago)}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {pago.metodo_pago_display || pago.metodo_pago}
+                                {pago.concepto_display ? ` · ${pago.concepto_display}` : ''}
+                              </p>
+                            </div>
+                            <span className="font-bold text-emerald-600">
+                              {formatMonto(pago.monto)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
               </div>
 

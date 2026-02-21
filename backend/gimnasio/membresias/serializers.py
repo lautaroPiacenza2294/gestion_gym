@@ -82,6 +82,7 @@ class MembresiaSerializer(serializers.ModelSerializer):
     cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
     cliente_apellido = serializers.CharField(source='cliente.apellido', read_only=True)
     cliente_dni = serializers.CharField(source='cliente.dni', read_only=True)
+    cliente_telefono = serializers.CharField(source='cliente.telefono', read_only=True)
     plan_nombre = serializers.CharField(source='plan.nombre', read_only=True)
     plan_frecuencia = serializers.IntegerField(source='plan.frecuencia_semanal', read_only=True)
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)

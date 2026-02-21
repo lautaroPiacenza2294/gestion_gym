@@ -7,11 +7,12 @@ import api from './axiosConfig';
 
 export const pagosAPI = {
   ...createCrudAPI('/finanzas/pagos'),
-  
+
   // Métodos personalizados del ViewSet
   getPagosHoy: () => api.get('/finanzas/pagos/hoy/'),
   getPagosMesActual: () => api.get('/finanzas/pagos/mes_actual/'),
   getTotalMes: () => api.get('/finanzas/pagos/total_mes/'),
+  getByCliente: (clienteId) => api.get(`/finanzas/pagos/?cliente=${clienteId}`),
 };
 
 // ============================================
