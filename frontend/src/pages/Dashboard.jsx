@@ -7,6 +7,7 @@ import GraficoSociosPorPlan from '../components/dashboard/GraficoSociosPorPlan';
 import AlertasPanel from '../components/dashboard/AlertasPanel';
 import ActividadReciente from '../components/dashboard/ActividadReciente';
 import PendientesPago from '../components/shared/PendientesPago';
+import CumpleaniosMes from '../components/shared/CumpleaniosMes';
 import { useDashboard } from '../hooks/useDashboard';
 
 const Dashboard = () => {
@@ -109,8 +110,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Pagos pendientes */}
-        <PendientesPago />
+        {/* Pagos pendientes y cumpleaños del mes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PendientesPago />
+          <CumpleaniosMes />
+        </div>
 
         {/* Actividad */}
         <ActividadReciente actividades={actividad || []} />

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Clock, DollarSign, User, Banknote, Loader2,
-  CheckCircle, AlertCircle, X, RefreshCw
+  CheckCircle, AlertCircle, X, RefreshCw, MessageCircle
 } from 'lucide-react';
 import { membresiasAPI, pagosAPI } from '../../services';
 
@@ -153,6 +153,22 @@ const ModalPago = ({ membresia, onClose, onSuccess }) => {
   );
 };
 
+// ── Función para abrir WhatsApp con mensaje de recordatorio ──────────────────
+const abrirWhatsapp = (mem) => {
+  let tel = (mem.cliente_telefono || '').replace(/\D/g, '');
+  if (!tel) {
+    alert(`${mem.cliente_nombre} no tiene teléfono registrado.`);
+    return;
+  }
+  // Normalizar número argentino: quitar 0 inicial y agregar código de país 54
+  if (tel.startsWith('0')) tel = tel.slice(1);
+  if (!tel.startsWith('54')) tel = '54' + tel;
+  const mensaje = encodeURIComponent(
+    `Hola ${mem.cliente_nombre}, te recordamos que tenés un pago pendiente de tu membresía *${mem.plan_nombre}* por ${formatMonto(mem.precio_contratado)}. ¡Podés acercarte al gym para regularizarlo! Gracias`
+  );
+  window.open(`https://wa.me/${tel}?text=${mensaje}`, '_blank');
+};
+
 // ── Componente principal ─────────────────────────────────────────────────────
 const PendientesPago = ({ refresh = 0 }) => {
   const [pendientes, setPendientes] = useState([]);
@@ -246,6 +262,14 @@ const PendientesPago = ({ refresh = 0 }) => {
                 <span className="text-sm font-bold text-gray-700">
                   {formatMonto(mem.precio_contratado)}
                 </span>
+                <button
+                  onClick={() => abrirWhatsapp(mem)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-all shadow-sm shadow-green-200 active:scale-95"
+                  title="Enviar recordatorio por WhatsApp"
+                >
+                  <MessageCircle size={12} />
+                  WhatsApp
+                </button>
                 <button
                   onClick={() => setModalPago(mem)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all shadow-sm shadow-blue-200 active:scale-95"
