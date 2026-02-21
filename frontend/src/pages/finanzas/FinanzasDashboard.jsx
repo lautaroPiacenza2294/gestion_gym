@@ -63,12 +63,12 @@ const FinanzasDashboard = () => {
 
       const ingresos = resIngresos.data.total || 0;
       const egresos = resEgresos.data.total || 0;
-      const gastosFijos = resGastosFijos.data.total || 0;
+      const gastosFijos = resGastosFijos.data.total_mensual || 0;  // el backend devuelve total_mensual
 
       setTotalIngresos(ingresos);
       setTotalEgresos(egresos);
       setTotalGastosFijos(gastosFijos);
-      setBalance(ingresos - egresos);
+      setBalance(ingresos - egresos - gastosFijos);
 
     } catch (error) {
       console.error('Error al cargar totales:', error);
@@ -112,8 +112,8 @@ const FinanzasDashboard = () => {
     setLoadingEgresos(true);
     try {
       const response = await egresosAPI.getMesActual();
-      const egresos = response.data.slice(0, 5);
-      setUltimosEgresos(egresos);
+      const lista = Array.isArray(response.data) ? response.data : (response.data?.results || []);
+      setUltimosEgresos(lista.slice(0, 5));
     } catch (error) {
       console.error('Error al cargar egresos:', error);
       setUltimosEgresos([]);
@@ -354,15 +354,6 @@ const FinanzasDashboard = () => {
 
           {/* Listas - 2 columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ListaPagos
-              pagos={ultimosPagos}
-              loading={loadingPagos}
-            />
-
-            <ListaEgresos
-              egresos={ultimosEgresos}
-              loading={loadingEgresos}
-            />
             <div>
               <ListaPagos
                 pagos={ultimosPagos}

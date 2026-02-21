@@ -107,7 +107,7 @@ const CumpleaniosMes = () => {
                     )}
                   </p>
                   <p className="text-xs text-gray-400">
-                    Día {dia} · Cumple {cliente.edad + 1} años
+                    Día {dia} · {dia >= new Date().getDate() ? `Cumple ${cliente.edad + 1} años` : `Cumplió ${cliente.edad} años`}
                   </p>
                 </div>
               </div>
