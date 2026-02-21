@@ -28,6 +28,7 @@ class ClienteListSerializer(serializers.ModelSerializer):
             'dni',
             'telefono',
             'email',
+            'fecha_nacimiento',
             'edad',
             'activo'
         ]
