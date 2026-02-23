@@ -8,6 +8,7 @@ import AlertasPanel from '../components/dashboard/AlertasPanel';
 import ActividadReciente from '../components/dashboard/ActividadReciente';
 import PendientesPago from '../components/shared/PendientesPago';
 import CumpleaniosMes from '../components/shared/CumpleaniosMes';
+import HistorialAccesos from '../components/dashboard/HistorialAccesos';
 import { useDashboard } from '../hooks/useDashboard';
 
 const Dashboard = () => {
@@ -115,6 +116,9 @@ const Dashboard = () => {
           <PendientesPago />
           <CumpleaniosMes />
         </div>
+
+        {/* Accesos del día */}
+        <HistorialAccesos />
 
         {/* Actividad */}
         <ActividadReciente actividades={actividad || []} />
